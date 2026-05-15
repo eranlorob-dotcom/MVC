@@ -27,13 +27,11 @@ keywords:
   - Québec
   - OGAT
   - accessibilité
-```yaml
 doi: "10.5281/zenodo.20218006"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.20218006"
     description: "Zenodo archive of this release"
-```
 license: GPL-3.0-or-later
 version: "1.0.0"
 date-released: "2026-05-15"
