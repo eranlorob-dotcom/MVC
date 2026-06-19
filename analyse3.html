@@ -646,7 +646,7 @@ function startRegional(){
         requestAnimationFrame(function(){
           try{
             // Skip municipalities with no housing data at all (no buildings AND no fallback grid possible)
-            if(muni.nbImm===0 && getBuildingPoints(muni.id).length===0){
+            if((muni.nbImm===0 && getBuildingPoints(muni.id).length===0) || muni.area < 1){ /* PATCH: superficie aberrante (ex. Kanesatake, aire≈0) -> non-scoré */
               BATCH_RESULTS[id]={name:muni.name,mrc:muni.mrc,area:muni.area,mtype:muni.mtype,
                 score:null,cov:null,fallback:false,nbImm:0,nbLog:0,noData:true};
               processNext(idx+1);
@@ -728,7 +728,7 @@ function runAnalysis(id){
   if(REGIONAL_FEATURES){
     document.getElementById("smsg").textContent="Calcul depuis cache régional…";
     // Skip if no housing data
-    if(muni.nbImm===0 && getBuildingPoints(muni.id).length===0){
+    if((muni.nbImm===0 && getBuildingPoints(muni.id).length===0) || muni.area < 1){ /* PATCH: superficie aberrante (ex. Kanesatake, aire≈0) -> non-scoré */
       document.getElementById("spin").style.display="none";
       document.getElementById("res").innerHTML='<div class="insuf">⚠ Aucune donnée de logement disponible pour cette municipalité dans le rôle foncier 2026. Calcul non effectué.</div>';
       styleDefault(muni.id);
