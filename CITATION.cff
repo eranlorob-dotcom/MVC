@@ -1,38 +1,26 @@
 cff-version: 1.2.0
-title: >-
-  Milieux de vie complets – Outil cartographique interactif
-  pour l'analyse des territoires des Laurentides
-message: >-
-  Si vous utilisez cet outil dans vos travaux, merci de le citer
-  en utilisant les métadonnées ci-dessous.
+message: "If you use this software, please cite it using the metadata below."
+title: "MilieuxVie: An Open-Source Web Mapping Tool for Complete-Neighbourhood Accessibility in Rural and Peri-Urban Municipalities (Laurentides, Quebec)"
 type: software
+version: v2.0
+date-released: 2026-06-19
+license: MIT
+repository-code: "https://github.com/eranlorob-dotcom/MVC"
 authors:
-  - given-names: Éric
-    family-names: Robitaille
-    orcid: "https://orcid.org/0009-0009-4834-7613"
-    affiliation: >-
-      CISSS des Laurentides – Direction de santé publique;
-      École de santé publique de l'Université de Montréal (ESPUM),
-      Département de médecine sociale et préventive
-repository-code: "https://github.com/eranlorob-dotcom/CISSSLAURENTIDES"
-url: "https://github.com/eranlorob-dotcom/CISSSLAURENTIDES/tree/main/MVC"
+  - family-names: Robitaille
+    given-names: Éric
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+    affiliation: "Direction de santé publique, CISSS des Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal"
 keywords:
-  - milieux de vie complets
-  - cartographie interactive
-  - santé publique
-  - aménagement du territoire
-  - géomatique
-  - Leaflet
-  - Laurentides
+  - complete neighbourhoods
+  - spatial accessibility
+  - service proximity
+  - OpenStreetMap
+  - WebGIS
+  - rural planning
+  - public health
   - Québec
-  - OGAT
-  - accessibilité
-doi: "10.5281/zenodo.20218006"
-identifiers:
-  - type: doi
-    value: "10.5281/zenodo.20218006"
-    description: "Zenodo archive of this release"
-license: GPL-3.0-or-later
-version: "1.0.0"
-date-released: "2026-05-15"
+  - Laurentides
+  - territorial planning
+
 
