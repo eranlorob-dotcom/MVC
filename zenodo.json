@@ -1,0 +1,40 @@
+{
+  "title": "MilieuxVie: An Open-Source Web Mapping Tool for Complete-Neighbourhood Accessibility in Rural and Peri-Urban Municipalities (Laurentides, Quebec)",
+  "upload_type": "software",
+  "version": "v1.0",
+  "description": "MilieuxVie is a single-file, browser-based interactive mapping application that assesses context-relative service- and mobility-proximity (the 'complete-neighbourhood' concept) across the 93 territorial units and urban perimeters of the Laurentides health region (RSS 15), Quebec. It evaluates 12 service categories from OpenStreetMap against adaptive distance tiers (dense / intermediate / rural), using residential parcels from the provincial assessment roll as dwelling-weighted origins. This record archives the tool together with its replication data (municipal and urban-perimeter results), documentation (README, data dictionary, methods note), and the verbatim regional Overpass query. Accompanies the article in Geographies (MDPI), manuscript geographies-4364677.",
+  "creators": [
+    {
+      "name": "Robitaille, \u00c9ric",
+      "affiliation": "Direction de sant\u00e9 publique, CISSS des Laurentides; D\u00e9partement de m\u00e9decine sociale et pr\u00e9ventive, ESPUM, Universit\u00e9 de Montr\u00e9al",
+      "orcid": "0000-0000-0000-0000"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "complete neighbourhoods",
+    "spatial accessibility",
+    "service proximity",
+    "OpenStreetMap",
+    "WebGIS",
+    "rural planning",
+    "public health",
+    "Qu\u00e9bec",
+    "Laurentides",
+    "territorial planning"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.3390/XXXXXXXX",
+      "relation": "isSupplementTo",
+      "scheme": "doi",
+      "resource_type": "publication-article"
+    },
+    {
+      "identifier": "https://github.com/eranlorob-dotcom/MVC",
+      "relation": "isDerivedFrom",
+      "scheme": "url"
+    }
+  ],
+  "notes": "OpenStreetMap data \u00a9 OpenStreetMap contributors (ODbL). Municipal boundaries and urban-perimeter geometries: Gouvernement du Qu\u00e9bec / MAMH via Donn\u00e9es Qu\u00e9bec. Dwelling counts: 2026 provincial property assessment roll."
+}
