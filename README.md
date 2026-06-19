@@ -1,74 +1,66 @@
-# Milieux de vie complets (MVC) – Outil cartographique interactif
+# MilieuxVie — Replication data, code and documentation
 
-[![DOI](https://zenodo.org/badge/1240166025.svg)](https://doi.org/10.5281/zenodo.20218005).
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+**An open-source web-mapping tool for assessing complete-neighbourhood (service- and mobility-proximity) accessibility in rural and peri-urban municipalities — Laurentides region (RSS 15), Québec, Canada.**
 
-Outil cartographique interactif pour l'analyse des **milieux de vie complets** à l'échelle des 93 municipalités de la région des Laurentides (Québec, Canada).
+This archive accompanies the manuscript *“MilieuxVie: An Open-Source Web Mapping Tool for Assessing Complete-Neighbourhood Accessibility in Rural and Peri-Urban Municipalities”* (Geographies, MDPI; manuscript ID geographies-4364677). It provides everything required to reproduce the figures and tables of the paper from a single frozen analysis snapshot.
 
-## Contexte
+- **Version:** v1.0
+- **Snapshot / analysis date:** 2026-06-19
+- **DOI:** [INSERT ZENODO/OSF DOI]
+- **Software release (immutable):** `eranlorob-dotcom/MVC` commit [INSERT COMMIT HASH], release tag [INSERT TAG]
+- **Author:** Éric Robitaille, Ph.D. — Direction de santé publique, CISSS des Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal — ORCID [INSERT ORCID]
+- **Contact:** [INSERT EMAIL]
 
-Le concept de *milieu de vie complet* désigne un environnement bâti où les résidents peuvent accéder, à distance de marche ou à proximité raisonnable, aux services, commerces, équipements et espaces publics nécessaires à leur vie quotidienne. Ce concept s'inscrit dans les nouvelles **orientations gouvernementales en aménagement du territoire** (OGAT) du Québec et dans les travaux de la Direction de santé publique du CISSS des Laurentides sur les liens entre environnement bâti et santé des populations.
+---
 
-Cet outil vise à soutenir le **transfert de connaissances** vers les élus municipaux, les urbanistes et les professionnels de santé publique de la région des Laurentides en rendant accessibles et visuelles des données complexes sur l'aménagement du territoire.
+## 1. What this archive contains
 
-## Fonctionnalités
+| File | Type | Description |
+|---|---|---|
+| `analyse3.html` | Code | The MilieuxVie tool — a single, self-contained HTML/JavaScript application (Leaflet). The exact release used to produce the deposited results. |
+| `mvc_laurentides_2026-06-19.geojson` | Data | Municipal results: one feature per territorial unit (93), with the composite score, the 12 parameter scores, dwelling counts, area, milieu type, and geometry. |
+| `lacunes_MVC_tous_perimetres.csv` | Data | Urban-perimeter results: one row per *périmètre d’urbanisation* (89 scored), with composite and per-parameter scores, dwelling counts and the count of below-target gaps. |
+| `pu_laurentides.geojson` | Data | Geometries of the 93 urban perimeters (*périmètres d’urbanisation*, source: Données Québec / MAMH). `OBJECTID` joins to the `#n` identifier in the CSV. |
+| `overpass_query_regional.txt` | Code | The exact Overpass QL query issued by the tool (verbatim), with the regional bounding box. |
+| `osm_extract_2026-06-19.*` | Data | **[TO ADD]** The date-stamped raw OSM response (or the processed POI dataset) returned by the query above. Required for byte-for-byte reproducibility because OSM is queried live. |
+| `DATA_DICTIONARY.md` | Doc | Field-by-field description of every data file. |
+| `METHODS_NOTE.md` | Doc | Concise methodological note: origins, parameters and adaptive radii, milieu classification, distance computation, the composite, the perimeter analysis, and limitations. |
 
-- Cartographie interactive (Leaflet) des scores d'accessibilité aux services de proximité
-- Analyse pondérée multi-indicateurs à l'échelle municipale
-- Typologie du parc résidentiel à partir du rôle d'évaluation foncière MAMH 2026
-- Indicateurs de logement abordable
-- Interface responsive adaptée aux présentations et consultations sur le terrain
+> **Note on reproducibility.** The tool queries OpenStreetMap live, so a fresh run reflects the current OSM state by design. All tables and figures in the paper derive from the **single 2026-06-19 snapshot** deposited here. To reproduce them exactly, use the deposited OSM extract rather than a live query.
 
-## Démonstration
+## 2. Study area and units
 
-🔗 **[Accéder à l'outil en ligne](https://eranlorob-dotcom.github.io/MVC/analyse3.html)**
+- **Region:** Laurentides administrative region (RSS 15), Québec, plus a small northern margin in the query bounding box.
+- **Territorial units:** 93 municipal-level features (8 MRC). 79 received a score; once Kanesatake is set to *no-data* (unreliable area/coverage), **78 scored units** remain (29 dense, 32 intermediate, 17 rural).
+- **Urban perimeters:** 93 *périmètres d’urbanisation*; **89 scored** (three returned no residential parcels and were excluded).
 
-## Technologies
+## 3. How to use the tool
 
-- [Leaflet](https://leafletjs.com/) – cartographie interactive
-- HTML / CSS / JavaScript
-- Données ouvertes du rôle d'évaluation foncière (MAMH)
-- Données de Statistique Canada (recensement)
+`analyse3.html` opens directly in a modern browser from the local filesystem (`file://`) — no web server is required. Internet access **is** required for: the mapping library and basemap tiles (loaded from a CDN) and live Overpass API queries. A previously exported GeoJSON can be re-loaded through the in-app file picker (no server, no CORS configuration).
 
-## Installation locale
+Two analysis modes are provided: a single-municipality mode (click a unit) and a one-pass regional mode that scores all units and exports the GeoJSON deposited here.
 
-Aucune installation requise. L'outil fonctionne entièrement côté client (navigateur web).
+## 4. How to reproduce the published results
 
-Pour une copie locale :
+1. Open `analyse3.html` in a browser **with the deposited `osm_extract_2026-06-19` loaded** (or accept a live query, understanding results will reflect the current OSM state).
+2. Run the regional analysis; export the municipal GeoJSON. It should match `mvc_laurentides_2026-06-19.geojson`.
+3. For perimeter results, run the perimeter analysis and export the gap table; it should match `lacunes_MVC_tous_perimetres.csv`.
+4. Statistical analyses (Kruskal–Wallis across milieu types, the paired municipal-vs-perimeter Wilcoxon test, the latitude gradient, and the weighting/threshold sensitivity analyses) are described in `METHODS_NOTE.md` and reproduce directly from the two result files.
 
-```bash
-git clone https://github.com/eranlorob-dotcom/MVC.git
-cd MVC
-# Ouvrir analyse3.html dans un navigateur
-```
+## 5. Licensing and attribution
 
-> **Note :** Certaines fonctionnalités nécessitent un serveur HTTP local en raison des politiques CORS. Vous pouvez utiliser `python -m http.server 8000` puis accéder à `http://localhost:8000/analyse3.html`.
+- **OpenStreetMap data** © OpenStreetMap contributors, under the **Open Database License (ODbL)**.
+- **Municipal boundaries and urban-perimeter geometries** — Gouvernement du Québec (MAMH / MERN), via **Données Québec**, under the applicable open licence; attribution required.
+- **Dwelling counts** derive from the 2026 provincial property assessment roll (*rôle d’évaluation foncière*).
+- **Code (`analyse3.html`)** — released under [INSERT LICENSE, e.g. MIT].
+- **This documentation** — [INSERT LICENSE, e.g. CC BY 4.0].
 
-## Citation
+## 6. How to cite
 
-Si vous utilisez cet outil dans vos travaux, merci de le citer :
+> Robitaille, É. (2026). *MilieuxVie — Replication data, code and documentation* (v1.0) [Data set and software]. [Zenodo/OSF]. https://doi.org/[INSERT DOI]
 
-```
-Robitaille, É. (2026). Milieux de vie complets – Outil cartographique interactif
-pour l'analyse des territoires des Laurentides (version 1.0.0).
-[https://doi.org/10.5281/zenodo.20218005]
-```
+Please also cite the accompanying article once published.
 
-Un fichier [`CITATION.cff`](CITATION.cff) est également fourni pour une intégration automatique dans les gestionnaires de références.
+## 7. Provenance and change log
 
-## Auteur
-
-**Éric Robitaille, Ph.D.**
-- Professeur, [École de santé publique de l'Université de Montréal](https://espum.umontreal.ca/) (ESPUM) – Département de médecine sociale et préventive
-- Chercheur, Direction de santé publique, [CISSS des Laurentides](https://www.cisss-laurentides.gouv.qc.ca/)
-- ORCID : [0009-0009-4834-7613](https://orcid.org/0009-0009-4834-7613)
-
-## Projet C.A.R.T.O.S.
-
-Cet outil s'inscrit dans le cadre du projet **C.A.R.T.O.S.** (*Cartographie et Analyse en Réseau pour la Transformation et l'Optimisation en Santé*), un programme de recherche visant le développement d'outils géoweb pour l'évaluation d'impact sur la santé (EIS) et le soutien à la planification territoriale au Québec.
-
-## Licence
-
-Ce projet est distribué sous licence [GNU General Public License v3.0](LICENSE).
-
-Vous êtes libre de l'utiliser, le modifier et le redistribuer, à condition que les travaux dérivés soient distribués sous la même licence.
+- **v1.0 (2026-06-19):** Initial public deposit accompanying the revised manuscript. Single frozen snapshot. Kanesatake set to *no-data*; urban-perimeter milieu now computed at perimeter scale (see `METHODS_NOTE.md`).

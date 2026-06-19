@@ -1,0 +1,34 @@
+// MilieuxVie — regional Overpass query (verbatim, as issued by the tool)
+// Endpoint: https://overpass-api.de/api/interpreter (POST)
+// Bounding box (S,W,N,E): 45.3964, -76.1985, 47.8133, -73.6802  (Laurentides region, RSS 15 + margin)
+// Run date of the deposited snapshot: [INSERT OSM EXTRACT DATE — e.g. 2026-06-19]
+
+[out:json][timeout:180];
+(
+  node["shop"~"supermarket|convenience|grocery|butcher|bakery|greengrocer|deli|food|general"](45.3964,-76.1985,47.8133,-73.6802);
+  way["shop"~"supermarket|convenience|grocery"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"~"kindergarten|childcare"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"="school"](45.3964,-76.1985,47.8133,-73.6802);
+  way["amenity"="school"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"~"college|university"](45.3964,-76.1985,47.8133,-73.6802);
+  node["leisure"~"park|garden|nature_reserve"](45.3964,-76.1985,47.8133,-73.6802);
+  way["leisure"~"park|garden|nature_reserve"](45.3964,-76.1985,47.8133,-73.6802);
+  node["landuse"~"forest|grass|meadow|village_green"](45.3964,-76.1985,47.8133,-73.6802);
+  node["leisure"~"sports_centre|fitness_centre|swimming_pool|stadium|pitch|recreation_ground|ice_rink"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"~"theatre|cinema|library|community_centre|arts_centre|social_centre"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"="pharmacy"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"~"clinic|hospital|doctors|health_centre|dentist"](45.3964,-76.1985,47.8133,-73.6802);
+  node["highway"="bus_stop"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"~"bus_station|ferry_terminal"](45.3964,-76.1985,47.8133,-73.6802);
+  node["railway"~"station|halt|tram_stop"](45.3964,-76.1985,47.8133,-73.6802);
+  node["amenity"~"car_sharing|bicycle_rental"](45.3964,-76.1985,47.8133,-73.6802);
+  way["highway"="cycleway"](45.3964,-76.1985,47.8133,-73.6802);
+  way["bicycle"="designated"](45.3964,-76.1985,47.8133,-73.6802);
+);
+out center;
+
+// Notes
+// - "out center" returns a single representative point (bounding-box centre) for ways/polygons.
+//   Distances to areal/linear features are therefore measured to that centre, not the nearest edge
+//   (see METHODS_NOTE.md, Limitations).
+// - Per-perimeter analyses reissue the same tag set restricted to each polygon via (poly:"lat lon ...").
