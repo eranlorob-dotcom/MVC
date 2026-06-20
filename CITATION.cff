@@ -2,15 +2,14 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
 title: "MilieuxVie: An Open-Source Web Mapping Tool for Complete-Neighbourhood Accessibility in Rural and Peri-Urban Municipalities (Laurentides, Quebec)"
 type: software
-version: v2.0
+version: v2.0.2
 date-released: 2026-06-19
 license: MIT
 repository-code: "https://github.com/eranlorob-dotcom/MVC"
 authors:
   - family-names: Robitaille
     given-names: Éric
-    orcid: "https://orcid.org/0009-0009-4834-7613"
-    affiliation: "Direction de santé publique,Santé Québec Laurentrides; Département de médecine sociale et préventive, ESPUM, Université de Montréal"
+    affiliation: "Direction de santé publique, CISSS des Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal"
 keywords:
   - complete neighbourhoods
   - spatial accessibility
