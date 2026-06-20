@@ -4,12 +4,12 @@
 
 This archive accompanies the manuscript *“MilieuxVie: An Open-Source Web Mapping Tool for Assessing Complete-Neighbourhood Accessibility in Rural and Peri-Urban Municipalities”* (Geographies, MDPI; manuscript ID geographies-4364677). It provides everything required to reproduce the figures and tables of the paper from a single frozen analysis snapshot.
 
-- **Version:** v1.0
+- **Version:** v2.0.2 (software release archived on Zenodo)
 - **Snapshot / analysis date:** 2026-06-19
-- **DOI:** [INSERT ZENODO/OSF DOI]
-- **Software release (immutable):** `eranlorob-dotcom/MVC` commit [INSERT COMMIT HASH], release tag [INSERT TAG]
-- **Author:** Éric Robitaille, Ph.D. — Direction de santé publique, CISSS des Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal — ORCID [INSERT ORCID]
-- **Contact:** [INSERT EMAIL]
+- **DOI (this version):** [10.5281/zenodo.20775043](https://doi.org/10.5281/zenodo.20775043)
+- **Software release (immutable):** `eranlorob-dotcom/MVC`, release tag `2.0.2` (https://github.com/eranlorob-dotcom/MVC/tree/2.0.2)
+- **Author:** Éric Robitaille, Ph.D. — Direction de santé publique, Santé Québec Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal — ORCID [INSERT ORCID]
+- **Contact:** [eric.robitaille@umontreal.ca]
 
 ---
 
@@ -57,10 +57,10 @@ Two analysis modes are provided: a single-municipality mode (click a unit) and a
 
 ## 6. How to cite
 
-> Robitaille, É. (2026). *MilieuxVie — Replication data, code and documentation* (v1.0) [Data set and software]. [Zenodo/OSF]. https://doi.org/[INSERT DOI]
+> Robitaille, É. (2026). *MilieuxVie: An Open-Source Web Mapping Tool for Complete-Neighbourhood Accessibility in Rural and Peri-Urban Municipalities (Laurentides, Quebec)* (v2.0.2) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20775043
 
 Please also cite the accompanying article once published.
 
 ## 7. Provenance and change log
 
-- **v1.0 (2026-06-19):** Initial public deposit accompanying the revised manuscript. Single frozen snapshot. Kanesatake set to *no-data*; urban-perimeter milieu now computed at perimeter scale (see `METHODS_NOTE.md`).
+- **v2.0.2 (2026-06-20):** Public deposit accompanying the revised manuscript; DOI 10.5281/zenodo.20775043. Single frozen 2026-06-19 analysis snapshot. Kanesatake set to *no-data*; urban-perimeter milieu computed at perimeter scale (see `METHODS_NOTE.md`).
