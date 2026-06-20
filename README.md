@@ -8,7 +8,7 @@ This archive accompanies the manuscript *“MilieuxVie: An Open-Source Web Mappi
 - **Snapshot / analysis date:** 2026-06-19
 - **DOI (this version):** [10.5281/zenodo.20775043](https://doi.org/10.5281/zenodo.20775043)
 - **Software release (immutable):** `eranlorob-dotcom/MVC`, release tag `2.0.2` (https://github.com/eranlorob-dotcom/MVC/tree/2.0.2)
-- **Author:** Éric Robitaille, Ph.D. — Direction de santé publique, Santé Québec Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal — ORCID [INSERT ORCID]
+- **Author:** Éric Robitaille, Ph.D. — Direction de santé publique, Santé Québec Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal — ORCID [0009-0009-4834-7613]
 - **Contact:** [eric.robitaille@umontreal.ca]
 
 ---
@@ -52,8 +52,7 @@ Two analysis modes are provided: a single-municipality mode (click a unit) and a
 - **OpenStreetMap data** © OpenStreetMap contributors, under the **Open Database License (ODbL)**.
 - **Municipal boundaries and urban-perimeter geometries** — Gouvernement du Québec (MAMH / MERN), via **Données Québec**, under the applicable open licence; attribution required.
 - **Dwelling counts** derive from the 2026 provincial property assessment roll (*rôle d’évaluation foncière*).
-- **Code (`analyse3.html`)** — released under [INSERT LICENSE, e.g. MIT].
-- **This documentation** — [INSERT LICENSE, e.g. CC BY 4.0].
+- **This documentation** — [https://github.com/eranlorob-dotcom/MVC?tab=GPL-3.0-1-ov-file].
 
 ## 6. How to cite
 
