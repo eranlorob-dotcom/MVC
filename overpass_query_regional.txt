@@ -1,7 +1,7 @@
 // MilieuxVie — regional Overpass query (verbatim, as issued by the tool)
 // Endpoint: https://overpass-api.de/api/interpreter (POST)
 // Bounding box (S,W,N,E): 45.3964, -76.1985, 47.8133, -73.6802  (Laurentides region, RSS 15 + margin)
-// Run date of the deposited snapshot: [INSERT OSM EXTRACT DATE — e.g. 2026-06-19]
+// Run date of the deposited snapshot: [2026-06-19]
 
 [out:json][timeout:180];
 (
