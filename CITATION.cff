@@ -1,25 +1,17 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it using the metadata below."
-title: "MilieuxVie: An Open-Source Web Mapping Tool for Complete-Neighbourhood Accessibility in Rural and Peri-Urban Municipalities (Laurentides, Quebec)"
+message: "If you use this software or data, please cite the manuscript and this archived release."
+title: "MilieuxVie: an open-source web mapping tool for complete-neighbourhood accessibility in rural and peri-urban municipalities (Laurentides, Québec)"
+abstract: "Self-contained web mapping tool, archived datasets and analysis code accompanying the Geographies (MDPI) manuscript on MilieuxVie."
 type: software
-version: v2.0.2
-date-released: 2026-06-19
-license: MIT
-repository-code: "https://github.com/eranlorob-dotcom/MVC"
 authors:
-  - family-names: Robitaille
-    given-names: Éric
-    affiliation: "Direction de santé publique, CISSS des Laurentides; Département de médecine sociale et préventive, ESPUM, Université de Montréal"
-keywords:
-  - complete neighbourhoods
-  - spatial accessibility
-  - service proximity
-  - OpenStreetMap
-  - WebGIS
-  - rural planning
-  - public health
-  - Québec
-  - Laurentides
-  - territorial planning
-
-
+  - family-names: "Robitaille"
+    given-names: "Éric"
+    orcid: "https://orcid.org/0009-0009-4834-7613"
+    affiliation: "Direction de santé publique, CISSS des Laurentides; École de santé publique de l'Université de Montréal (ESPUM)"
+version: "2.0.3"
+date-released: "2026-06-23"
+license: CC-BY-4.0
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20775043"
+    description: 0.5281/zenodo.20775043
