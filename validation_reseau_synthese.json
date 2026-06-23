@@ -1,0 +1,101 @@
+{
+  "generated": "2026-06-21T19:04:57.377Z",
+  "profile": "foot",
+  "osrm": "routing.openstreetmap.de",
+  "origins_per_muni": 12,
+  "max_dest_per_cat": 16,
+  "seed": 42,
+  "osrm_failures": 0,
+  "sample": [
+    {
+      "name": "Mirabel",
+      "milieu": "dense"
+    },
+    {
+      "name": "Blainville",
+      "milieu": "dense"
+    },
+    {
+      "name": "Sainte-Marthe-sur-le-Lac",
+      "milieu": "dense"
+    },
+    {
+      "name": "Lac-des-Écorces",
+      "milieu": "inter"
+    },
+    {
+      "name": "Rivière-Rouge",
+      "milieu": "inter"
+    },
+    {
+      "name": "Mont-Blanc",
+      "milieu": "inter"
+    },
+    {
+      "name": "La Conception",
+      "milieu": "inter"
+    },
+    {
+      "name": "Lac-Marguerite",
+      "milieu": "rural"
+    },
+    {
+      "name": "Lac-Oscar",
+      "milieu": "rural"
+    },
+    {
+      "name": "Lac-Ernest",
+      "milieu": "rural"
+    }
+  ],
+  "by_milieu": {
+    "dense": {
+      "n": 420,
+      "medRatio": 1.391883450015519,
+      "q1": 1.22943176832129,
+      "q3": 1.6424724640716546,
+      "meanAbs": 1242.5753518132587,
+      "meanRel": 0.5691229456086141,
+      "flips": 32,
+      "flipPct": 0.0761904761904762,
+      "rho": 0.9817860969409448
+    },
+    "inter": {
+      "n": 324,
+      "medRatio": 1.435726378840574,
+      "q1": 1.1544634047982,
+      "q3": 2.132519247118969,
+      "meanAbs": 7336.820099747304,
+      "meanRel": 9.600778417545845,
+      "flips": 33,
+      "flipPct": 0.10185185185185185,
+      "rho": 0.797342929974509
+    },
+    "rural": {
+      "n": 108,
+      "medRatio": 1.7648311108482195,
+      "q1": 1.3897986532769566,
+      "q3": 1.9360534071425526,
+      "meanAbs": 20746.72071294358,
+      "meanRel": 0.9507798616707335,
+      "flips": 0,
+      "flipPct": 0,
+      "rho": 0.7899244524469595
+    }
+  },
+  "overall": {
+    "n": 852,
+    "medRatio": 1.4298951628649608,
+    "q1": 1.2193084326353618,
+    "q3": 1.7955074609594446,
+    "meanAbs": 6032.461498917368,
+    "meanRel": 4.052075198944728,
+    "flips": 65,
+    "flipPct": 0.07629107981220658,
+    "rho": 0.9077226843232634
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0",
+    "cores": 12
+  }
+}

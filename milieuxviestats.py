@@ -6,7 +6,7 @@ PARAMS = ['pct_alimentation','pct_service_garde','pct_ecole_prim','pct_ecole_sec
           'pct_loisirs','pct_culture','pct_pharmacie','pct_sante','pct_transport','pct_autopartage','pct_cyclable']
 ESSENTIAL = ['pct_alimentation','pct_service_garde','pct_ecole_prim','pct_ecole_sec','pct_pharmacie','pct_sante']
 
-d = json.load(open('/mnt/user-data/uploads/mvc_laurentides_2026-06-19.geojson'))
+d = json.load(open('mvc_laurentides_2026-06-23.geojson'))
 rows=[]
 for f in d['features']:
     p=f['properties']; c=shape(f['geometry']).centroid
@@ -74,7 +74,7 @@ for m,row in mrc.iterrows(): print("   %-22s n=%2d median=%.1f"%(m,row['n'],row[
 
 print("\n"+"="*70)
 print("D. WILCOXON paired: municipal vs urban-perimeter (principal PU)")
-pu=pd.read_csv('/mnt/user-data/uploads/lacunes_MVC_tous_perimetres__2_.csv')
+pu=pd.read_csv('lacunes_MVC_tous_perimetres__2_.csv')
 pu.columns=[c.strip() for c in pu.columns]
 pu['Municipalité']=pu['Municipalité'].astype(str).str.strip()
 pu['Score %']=pd.to_numeric(pu['Score %'],errors='coerce')

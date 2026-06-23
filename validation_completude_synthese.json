@@ -1,0 +1,244 @@
+{
+  "generated": "2026-06-22T13:31:14.420Z",
+  "seed": 42,
+  "detection_m": 150,
+  "osrm": null,
+  "n_munis": 15,
+  "sample": [
+    {
+      "name": "Mirabel",
+      "code": "74005",
+      "milieu": "dense"
+    },
+    {
+      "name": "Blainville",
+      "code": "73015",
+      "milieu": "dense"
+    },
+    {
+      "name": "Sainte-Marthe-sur-le-Lac",
+      "code": "72015",
+      "milieu": "dense"
+    },
+    {
+      "name": "Lorraine",
+      "code": "73025",
+      "milieu": "dense"
+    },
+    {
+      "name": "Harrington",
+      "code": "76065",
+      "milieu": "dense"
+    },
+    {
+      "name": "Lac-des-Écorces",
+      "code": "79078",
+      "milieu": "inter"
+    },
+    {
+      "name": "Rivière-Rouge",
+      "code": "79037",
+      "milieu": "inter"
+    },
+    {
+      "name": "Mont-Blanc",
+      "code": "78047",
+      "milieu": "inter"
+    },
+    {
+      "name": "La Conception",
+      "code": "78115",
+      "milieu": "inter"
+    },
+    {
+      "name": "Sainte-Adèle",
+      "code": "77022",
+      "milieu": "inter"
+    },
+    {
+      "name": "Lac-Marguerite",
+      "code": "79926",
+      "milieu": "rural"
+    },
+    {
+      "name": "Lac-Oscar",
+      "code": "79914",
+      "milieu": "rural"
+    },
+    {
+      "name": "Lac-Ernest",
+      "code": "79924",
+      "milieu": "rural"
+    },
+    {
+      "name": "La Minerve",
+      "code": "78130",
+      "milieu": "rural"
+    },
+    {
+      "name": "Barkmere",
+      "code": "78050",
+      "milieu": "rural"
+    }
+  ],
+  "overpass_failures": 0,
+  "by_category": {
+    "alimentation": {
+      "dense": {
+        "ref": 57,
+        "osm": 81,
+        "match": 48
+      },
+      "inter": {
+        "ref": 25,
+        "osm": 27,
+        "match": 20
+      },
+      "rural": {
+        "ref": 2,
+        "osm": 2,
+        "match": 1
+      }
+    },
+    "pharmacie": {
+      "dense": {
+        "ref": 4,
+        "osm": 20,
+        "match": 3
+      },
+      "inter": {
+        "ref": 2,
+        "osm": 6,
+        "match": 2
+      },
+      "rural": {
+        "ref": 0,
+        "osm": 0,
+        "match": 0
+      }
+    },
+    "ecole_prim": {
+      "dense": {
+        "ref": 33,
+        "osm": 42,
+        "match": 32
+      },
+      "inter": {
+        "ref": 8,
+        "osm": 10,
+        "match": 7
+      },
+      "rural": {
+        "ref": 1,
+        "osm": 1,
+        "match": 1
+      }
+    },
+    "ecole_sec": {
+      "dense": {
+        "ref": 5,
+        "osm": 42,
+        "match": 5
+      },
+      "inter": {
+        "ref": 2,
+        "osm": 10,
+        "match": 2
+      },
+      "rural": {
+        "ref": 0,
+        "osm": 1,
+        "match": 0
+      }
+    },
+    "service_garde": {
+      "dense": {
+        "ref": 60,
+        "osm": 19,
+        "match": 18
+      },
+      "inter": {
+        "ref": 4,
+        "osm": 2,
+        "match": 0
+      },
+      "rural": {
+        "ref": 0,
+        "osm": 0,
+        "match": 0
+      }
+    },
+    "sante": {
+      "dense": {
+        "ref": 11,
+        "osm": 14,
+        "match": 1
+      },
+      "inter": {
+        "ref": 3,
+        "osm": 4,
+        "match": 1
+      },
+      "rural": {
+        "ref": 0,
+        "osm": 0,
+        "match": 0
+      }
+    },
+    "culture": {
+      "dense": {
+        "ref": 6,
+        "osm": 26,
+        "match": 2
+      },
+      "inter": {
+        "ref": 9,
+        "osm": 10,
+        "match": 7
+      },
+      "rural": {
+        "ref": 2,
+        "osm": 2,
+        "match": 2
+      }
+    },
+    "loisirs": {
+      "dense": {
+        "ref": 35,
+        "osm": 430,
+        "match": 17
+      },
+      "inter": {
+        "ref": 14,
+        "osm": 102,
+        "match": 5
+      },
+      "rural": {
+        "ref": 0,
+        "osm": 5,
+        "match": 0
+      }
+    },
+    "nature": {
+      "dense": {
+        "ref": 383,
+        "osm": 204,
+        "match": 152
+      },
+      "inter": {
+        "ref": 37,
+        "osm": 32,
+        "match": 4
+      },
+      "rural": {
+        "ref": 4,
+        "osm": 4,
+        "match": 0
+      }
+    }
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36 Edg/149.0.0.0",
+    "cores": 12
+  }
+}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MilieuxVie — Validation de complétude OSM (rôle/CUBF)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#0f1c1f;--panel:#15282c;--ink:#e7eef0;--mut:#9fb6bb;--teal:#2bb3a3;--gold:#d8a838;--line:#26414a;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Source Sans 3",system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{margin:0;font-size:16px;font-weight:700}
+header .sub{font-size:12px;color:var(--mut);margin-top:2px}
+.wrap{display:flex;min-height:calc(100vh - 56px)}
+#side{width:400px;flex:0 0 400px;border-right:1px solid var(--line);padding:14px;overflow:auto;max-height:calc(100vh - 56px)}
+#map{flex:1;min-height:calc(100vh - 56px)}
+.fld{margin-bottom:10px}
+.fld label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+.fld input,.fld select{width:100%;padding:6px 8px;background:#0c181b;border:1px solid var(--line);color:var(--ink);border-radius:6px}
+.row{display:flex;gap:8px}.row>div{flex:1}
+button{cursor:pointer;border:none;border-radius:6px;padding:8px 12px;font-weight:600;color:#06222a;background:var(--teal)}
+button.alt{background:#1d3640;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:not-allowed}
+#status{font-size:12px;color:var(--gold);margin:8px 0;min-height:16px}
+.bar{height:8px;background:#0c181b;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;width:0;background:var(--teal);transition:width .2s}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
+th,td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{color:var(--mut);border-bottom:1px solid var(--teal)}
+.note{font-size:11px;color:var(--mut);line-height:1.45;margin-top:8px}
+.ok{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2bb3a3;margin-right:5px}
+.exprow{display:flex;gap:8px;margin-top:10px}
+small.k{color:var(--mut)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Validation de complétude OSM — inventaire du rôle (CUBF)</h1>
+  <div class="sub">Référence = unités non résidentielles du rôle (CUBF) · cible = OSM (Overpass) · taux de détection par appariement spatial + ratio OSM/référence, par catégorie et milieu</div>
+</header>
+<div class="wrap">
+  <div id="side">
+    <div class="fld"><label>1 · Inventaire de référence (GeoJSON non résidentiel, champ <code>utilisation</code> + <code>code_mun</code>)</label><input type="file" id="fileRef" accept=".geojson,.json"></div>
+    <div class="fld"><label>2 · Municipalités (GeoJSON, <code>type_milieu</code> + <code>MUS_CO_GEO</code>)</label><input type="file" id="fileMun" accept=".geojson,.json"></div>
+    <div class="row">
+      <div class="fld"><label>Dense (n)</label><input type="number" id="nDense" value="5" min="0" max="40"></div>
+      <div class="fld"><label>Interméd. (n)</label><input type="number" id="nInter" value="5" min="0" max="40"></div>
+      <div class="fld"><label>Rural (n)</label><input type="number" id="nRural" value="5" min="0" max="40"></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label>Graine</label><input type="number" id="seed" value="42"></div>
+      <div class="fld"><label>Seuil détection (m)</label><input type="number" id="dist" value="150" min="25" max="500"></div>
+    </div>
+    <div class="fld"><label><input type="checkbox" id="allMun" style="width:auto"> Toutes les municipalités (ignore le tirage)</label></div>
+    <div class="row" style="align-items:flex-end">
+      <div class="fld" style="flex:2"><button id="run" disabled>▶ Lancer la validation</button></div>
+      <div class="fld" style="flex:1"><button class="alt" id="resample" disabled>Re-tirer</button></div>
+    </div>
+    <div id="status"></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div id="sample"></div>
+    <div id="results"></div>
+    <div class="exprow" id="exprow" style="display:none">
+      <button class="alt" id="csv">⬇ CSV (catégorie × milieu)</button>
+      <button class="alt" id="json">⬇ JSON (synthèse)</button>
+    </div>
+    <div class="note">
+      Méthode : chaque équipement de référence (rôle) est « détecté » s'il existe un objet OSM de la même catégorie à moins du seuil (appariement spatial). Taux de détection = détectés / référence. On rapporte aussi le décompte OSM (dans le polygone municipal) et le ratio OSM/référence, par catégorie et milieu. Catégories validables (bâties) : alimentation, pharmacie, écoles, garde, santé, culture, loisirs, parcs. <b>Non validables contre le rôle</b> : transport en commun, réseau cyclable, mobilité partagée. Données : rôle © Données Québec · © OpenStreetMap. CORS : si <code>file://</code> bloque, servez via un petit serveur local.
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+<script>
+/* ===== Correspondance CUBF -> catégorie (curée) ===== */
+var CUBF={
+ alimentation:['5411','5412','5413','5461','5462','5499','5533'],
+ pharmacie:['5911'],
+ ecole_prim:['6812','6815'],
+ ecole_sec:['6813','6822'],
+ service_garde:['6541','6543'],
+ sante:['6511','6513','6517','6519'],
+ culture:['7111','7112','7115','7116','7211','7212','7214','6997'],
+ loisirs:['7222','7425','7432','7433','7451','7422','7411','7412'],
+ nature:['7611','7620']
+};
+var CODE2CAT={};for(var c in CUBF)CUBF[c].forEach(function(k){CODE2CAT[k]=c;});
+/* ===== Catégories validées + correspondance OSM (mêmes tags que l'outil) ===== */
+var CATS=[
+ {id:"alimentation",label:"Alimentation",match:function(t){return t.shop&&/supermarket|convenience|grocery|butcher|bakery|greengrocer|deli|food|general/.test(t.shop);}},
+ {id:"pharmacie",label:"Pharmacie",match:function(t){return t.amenity==="pharmacy";}},
+ {id:"ecole_prim",label:"École primaire",match:function(t){return t.amenity==="school";}},
+ {id:"ecole_sec",label:"École secondaire",match:function(t){return t.amenity==="school"||/college|university/.test(t.amenity||"");}},
+ {id:"service_garde",label:"Service de garde",match:function(t){return /kindergarten|childcare/.test(t.amenity||"");}},
+ {id:"sante",label:"Santé 1re ligne",match:function(t){return /clinic|hospital|doctors|health_centre|dentist/.test(t.amenity||"");}},
+ {id:"culture",label:"Culture",match:function(t){return /theatre|cinema|library|community_centre|arts_centre|social_centre|museum/.test(t.amenity||"")||t.tourism==="museum";}},
+ {id:"loisirs",label:"Loisirs et sport",match:function(t){return /sports_centre|fitness_centre|swimming_pool|stadium|pitch|recreation_ground|ice_rink|golf_course/.test(t.leisure||"");}},
+ {id:"nature",label:"Espaces naturels (parcs)",match:function(t){return /park|garden|nature_reserve/.test(t.leisure||"");}}
+];
+var CATMAP={};CATS.forEach(function(c){CATMAP[c.id]=c;});
+
+/* ===== Carte ===== */
+var map=L.map("map",{center:[46.6,-74.6],zoom:8});
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{attribution:"&copy; OpenStreetMap &copy; CARTO",subdomains:"abcd",maxZoom:19}).addTo(map);
+var sampleLayer=L.layerGroup().addTo(map), ptLayer=L.layerGroup().addTo(map);
+
+/* ===== Utilitaires ===== */
+function haver(la1,lo1,la2,lo2){var R=6371000,r=Math.PI/180,dLa=(la2-la1)*r,dLo=(lo2-lo1)*r;var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)*Math.sin(dLo/2);return 2*R*Math.asin(Math.sqrt(a));}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,rand){arr=arr.slice();for(var i=arr.length-1;i>0;i--){var j=Math.floor(rand()*(i+1));var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;}return arr;}
+function ringsOf(geom){var polys=[];if(geom.type==="Polygon")polys.push(geom.coordinates);else if(geom.type==="MultiPolygon")geom.coordinates.forEach(function(p){polys.push(p);});return polys.map(function(p){return{outer:p[0],holes:p.slice(1)};});}
+function inRing(lon,lat,ring){var inside=false;for(var i=0,j=ring.length-1;i<ring.length;j=i++){var xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];var hit=((yi>lat)!==(yj>lat))&&(lon<(xj-xi)*(lat-yi)/(yj-yi)+xi);if(hit)inside=!inside;}return inside;}
+function inPoly(lon,lat,polys){for(var k=0;k<polys.length;k++){if(inRing(lon,lat,polys[k].outer)){var hole=false;for(var h=0;h<polys[k].holes.length;h++){if(inRing(lon,lat,polys[k].holes[h])){hole=true;break;}}if(!hole)return true;}}return false;}
+function bboxOf(polys){var s=90,w=180,n=-90,e=-180;polys.forEach(function(p){p.outer.forEach(function(co){if(co[1]<s)s=co[1];if(co[1]>n)n=co[1];if(co[0]<w)w=co[0];if(co[0]>e)e=co[0];});});return{s:s,w:w,n:n,e:e};}
+function milieuOf(pr){var s=((pr.type_milieu!=null?pr.type_milieu:"")+"").toLowerCase();if(/dense/.test(s))return"dense";if(/interm|inter/.test(s))return"inter";if(/rural/.test(s))return"rural";var a=pr.superficie_km2,nlg=pr.nb_logements;if(a&&nlg){var d=nlg/a;return d<10?"rural":d<100?"inter":"dense";}return null;}
+
+/* ===== Overpass ===== */
+function ovPost(q){var eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"];function next(i){if(i>=eps.length)return Promise.reject(new Error("Overpass injoignable"));return fetch(eps[i],{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).catch(function(){return next(i+1);});}return next(0);}
+function servicesQuery(bb){var b=bb.s+","+bb.w+","+bb.n+","+bb.e;
+ return "[out:json][timeout:120];("+
+ 'node["shop"~"supermarket|convenience|grocery|butcher|bakery|greengrocer|deli|food|general"]('+b+');way["shop"~"supermarket|convenience|grocery"]('+b+');'+
+ 'node["amenity"~"kindergarten|childcare"]('+b+');'+
+ 'node["amenity"="school"]('+b+');way["amenity"="school"]('+b+');node["amenity"~"college|university"]('+b+');'+
+ 'node["leisure"~"park|garden|nature_reserve"]('+b+');way["leisure"~"park|garden|nature_reserve"]('+b+');'+
+ 'node["leisure"~"sports_centre|fitness_centre|swimming_pool|stadium|pitch|recreation_ground|ice_rink|golf_course"]('+b+');way["leisure"~"sports_centre|fitness_centre|swimming_pool|stadium|pitch|recreation_ground|ice_rink|golf_course"]('+b+');'+
+ 'node["amenity"~"theatre|cinema|library|community_centre|arts_centre|social_centre"]('+b+');way["amenity"~"theatre|cinema|library|community_centre|arts_centre|social_centre"]('+b+');node["tourism"="museum"]('+b+');way["tourism"="museum"]('+b+');'+
+ 'node["amenity"="pharmacy"]('+b+');node["amenity"~"clinic|hospital|doctors|health_centre|dentist"]('+b+');way["amenity"~"clinic|hospital|doctors|health_centre|dentist"]('+b+');'+
+ ");out center;";
+}
+function classify(elements){var cats={};CATS.forEach(function(c){cats[c.id]=[];});elements.forEach(function(el){var t=el.tags||{};var la,lo;if(el.type==="node"){la=el.lat;lo=el.lon;}else if(el.center){la=el.center.lat;lo=el.center.lon;}else return;if(la==null||lo==null)return;CATS.forEach(function(c){if(c.match(t))cats[c.id].push({lat:la,lon:lo});});});return cats;}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+/* ===== État ===== */
+var REFBYMUN={}, MUNIS=[], CODE2MUN={}, SAMPLE=[];
+var RESULT=null;
+var $=function(id){return document.getElementById(id);};
+function setStatus(t){$("status").textContent=t;}
+function setProg(p){$("prog").style.width=Math.round(p*100)+"%";}
+function ready(){if(Object.keys(REFBYMUN).length&&MUNIS.length){$("run").disabled=false;$("resample").disabled=false;doSample();}}
+
+$("fileRef").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;setStatus("Lecture de la référence…");var rd=new FileReader();
+ rd.onload=function(){try{var gj=JSON.parse(rd.result);var fe=gj.features||[];REFBYMUN={};var kept=0;
+  fe.forEach(function(ft){var p=ft.properties||{};var u=(p.utilisation!=null?p.utilisation:"")+"";var cat=CODE2CAT[u];if(!cat)return;if(!ft.geometry||ft.geometry.type!=="Point")return;var co=ft.geometry.coordinates;var mun=(p.code_mun!=null?p.code_mun:"")+"";if(!REFBYMUN[mun])REFBYMUN[mun]={};if(!REFBYMUN[mun][cat])REFBYMUN[mun][cat]=[];REFBYMUN[mun][cat].push({lat:co[1],lon:co[0]});kept++;});
+  setStatus(kept+" équipements de référence classés ("+Object.keys(REFBYMUN).length+" municipalités). "+(MUNIS.length?"":"Chargez les municipalités."));ready();
+ }catch(err){setStatus("Erreur référence : "+err.message);}};rd.readAsText(f);});
+
+$("fileMun").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;setStatus("Lecture des municipalités…");var rd=new FileReader();
+ rd.onload=function(){try{var gj=JSON.parse(rd.result);var fe=gj.features||[];MUNIS=[];CODE2MUN={};
+  fe.forEach(function(ft){if(!ft.geometry)return;var polys=ringsOf(ft.geometry);if(!polys.length)return;var pr=ft.properties||{};var mt=milieuOf(pr);if(!mt)return;var code=(pr.MUS_CO_GEO!=null?pr.MUS_CO_GEO:"")+"";var m={name:(pr.MUS_NM_MUN||pr.name||"?"),code:code,mt:mt,polys:polys,bb:bboxOf(polys)};MUNIS.push(m);if(code)CODE2MUN[code]=m;});
+  setStatus(MUNIS.length+" municipalités chargées. "+(Object.keys(REFBYMUN).length?"":"Chargez la référence."));ready();
+ }catch(err){setStatus("Erreur municipalités : "+err.message);}};rd.readAsText(f);});
+
+function doSample(){
+  if($("allMun").checked){SAMPLE=MUNIS.slice();}
+  else{var rand=mulberry32(parseInt($("seed").value)||42);var want={dense:parseInt($("nDense").value)||0,inter:parseInt($("nInter").value)||0,rural:parseInt($("nRural").value)||0};
+   SAMPLE=[];["dense","inter","rural"].forEach(function(mt){var pool=shuffle(MUNIS.filter(function(m){return m.mt===mt;}),rand);SAMPLE=SAMPLE.concat(pool.slice(0,want[mt]));});}
+  sampleLayer.clearLayers();ptLayer.clearLayers();
+  var css={dense:"#2bb3a3",inter:"#d8a838",rural:"#b07fd0"};
+  SAMPLE.forEach(function(m){m.polys.forEach(function(pp){L.polygon(pp.outer.map(function(c){return[c[1],c[0]];}),{color:css[m.mt],weight:1.5,fillOpacity:0.10}).addTo(sampleLayer).bindTooltip(m.name+" ("+m.mt+")");});});
+  if(SAMPLE.length){try{map.fitBounds(L.featureGroup(sampleLayer.getLayers()).getBounds().pad(0.1));}catch(e){}}
+  $("sample").innerHTML="<div class='note'><span class='ok'></span>Échantillon : <b>"+SAMPLE.length+"</b> municipalités ("+SAMPLE.filter(function(m){return m.mt==='dense';}).length+" D / "+SAMPLE.filter(function(m){return m.mt==='inter';}).length+" I / "+SAMPLE.filter(function(m){return m.mt==='rural';}).length+" R)</div>";
+  $("results").innerHTML="";$("exprow").style.display="none";
+}
+$("resample").addEventListener("click",doSample);
+["seed","nDense","nInter","nRural","allMun"].forEach(function(id){$(id).addEventListener("change",function(){if(MUNIS.length)doSample();});});
+
+$("run").addEventListener("click",async function(){
+  if(!SAMPLE.length){setStatus("Aucun échantillon.");return;}
+  $("run").disabled=true;$("resample").disabled=true;
+  var D=parseInt($("dist").value)||150, fails=0;
+  // agrégats : cat -> milieu -> {ref,osm,match}
+  var agg={};CATS.forEach(function(c){agg[c.id]={dense:{ref:0,osm:0,match:0},inter:{ref:0,osm:0,match:0},rural:{ref:0,osm:0,match:0}};});
+  ptLayer.clearLayers();
+  for(var s=0;s<SAMPLE.length;s++){
+    var m=SAMPLE[s];setStatus("["+(s+1)+"/"+SAMPLE.length+"] "+m.name+" — OSM…");
+    var svc;try{svc=await ovPost(servicesQuery(m.bb));}catch(e){fails++;setProg((s+1)/SAMPLE.length);continue;}
+    var osm=classify(svc.elements||[]);
+    var refM=REFBYMUN[m.code]||{};
+    CATS.forEach(function(c){
+      var osmPts=(osm[c.id]||[]).filter(function(p){return inPoly(p.lon,p.lat,m.polys);});
+      var refPts=refM[c.id]||[];
+      var matched=0;
+      refPts.forEach(function(rp){var hit=false;for(var k=0;k<osmPts.length;k++){if(haver(rp.lat,rp.lon,osmPts[k].lat,osmPts[k].lon)<=D){hit=true;break;}}if(hit)matched++;
+        L.circleMarker([rp.lat,rp.lon],{radius:3,color:hit?"#2bb3a3":"#e2554f",weight:1,fillOpacity:0.7}).addTo(ptLayer);});
+      var a=agg[c.id][m.mt];a.ref+=refPts.length;a.osm+=osmPts.length;a.match+=matched;
+    });
+    setProg((s+1)/SAMPLE.length);await sleep(1500);
+  }
+  setStatus("Terminé — échecs Overpass : "+fails+"/"+SAMPLE.length+". Points rouges = référence non détectée dans OSM.");
+  render(agg,fails,D);
+  $("run").disabled=false;$("resample").disabled=false;
+});
+
+function pct(m,r){return r>0?(100*m/r):null;}
+function render(agg,fails,D){
+  function tot(cid){var a=agg[cid];return{ref:a.dense.ref+a.inter.ref+a.rural.ref,osm:a.dense.osm+a.inter.osm+a.rural.osm,match:a.dense.match+a.inter.match+a.rural.match};}
+  function f(x){return x==null?"—":x.toFixed(0)+"%";}
+  var h="<table><thead><tr><th>Catégorie</th><th>Réf (n)</th><th>OSM (n)</th><th>Détection</th><th>Dense</th><th>Interm.</th><th>Rural</th></tr></thead><tbody>";
+  var T={ref:0,osm:0,match:0};
+  CATS.forEach(function(c){var a=agg[c.id],t=tot(c.id);T.ref+=t.ref;T.osm+=t.osm;T.match+=t.match;
+    h+="<tr><td>"+c.label+"</td><td>"+t.ref+"</td><td>"+t.osm+"</td><td><b>"+f(pct(t.match,t.ref))+"</b></td>"+
+       "<td>"+f(pct(a.dense.match,a.dense.ref))+"</td><td>"+f(pct(a.inter.match,a.inter.ref))+"</td><td>"+f(pct(a.rural.match,a.rural.ref))+"</td></tr>";});
+  h+="<tr style='border-top:2px solid #2bb3a3'><td><b>Ensemble</b></td><td><b>"+T.ref+"</b></td><td><b>"+T.osm+"</b></td><td><b>"+f(pct(T.match,T.ref))+"</b></td><td colspan='3'><small class='k'>ratio OSM/réf global : "+(T.ref?(T.osm/T.ref).toFixed(2):"—")+"</small></td></tr>";
+  h+="</tbody></table>";
+  h+="<div class='note'>Détection = % d'équipements du rôle ayant un objet OSM de même catégorie à ≤ "+D+" m. Un faible taux signale une <b>sous-cartographie OSM</b> (et non nécessairement un déficit réel de service); le ratio OSM/réf > 1 indique qu'OSM contient plus d'objets que le rôle (granularité ou objets hors rôle).</div>";
+  $("results").innerHTML=h;$("exprow").style.display="flex";
+  RESULT={generated:new Date().toISOString(),seed:parseInt($("seed").value)||42,detection_m:D,osrm:null,
+    n_munis:SAMPLE.length,sample:SAMPLE.map(function(m){return{name:m.name,code:m.code,milieu:m.mt};}),
+    overpass_failures:fails,by_category:agg,
+    environment:{userAgent:navigator.userAgent,cores:navigator.hardwareConcurrency||null}};
+}
+$("csv").addEventListener("click",function(){if(!RESULT)return;var L2=["categorie,milieu,reference_n,osm_n,detectes_n,detection_pct"];
+  CATS.forEach(function(c){["dense","inter","rural"].forEach(function(mt){var a=RESULT.by_category[c.id][mt];var p=a.ref?(100*a.match/a.ref).toFixed(1):"";L2.push([c.id,mt,a.ref,a.osm,a.match,p].join(","));});});
+  dl(L2.join("\n"),"validation_completude_osm.csv","text/csv");});
+$("json").addEventListener("click",function(){dl(JSON.stringify(RESULT,null,2),"validation_completude_synthese.json","application/json");});
+function dl(txt,name,type){var b=new Blob([txt],{type:type});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();}
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MilieuxVie — Validation distance réseau (Haversine vs OSRM)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#0f1c1f;--panel:#15282c;--ink:#e7eef0;--mut:#9fb6bb;--teal:#2bb3a3;--gold:#d8a838;--line:#26414a;}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Source Sans 3",system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{margin:0;font-size:16px;font-weight:700}
+header .sub{font-size:12px;color:var(--mut);margin-top:2px}
+.wrap{display:flex;gap:0;min-height:calc(100vh - 56px)}
+#side{width:380px;flex:0 0 380px;border-right:1px solid var(--line);padding:14px;overflow:auto;max-height:calc(100vh - 56px)}
+#map{flex:1;min-height:calc(100vh - 56px)}
+.fld{margin-bottom:10px}
+.fld label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+.fld input,.fld select{width:100%;padding:6px 8px;background:#0c181b;border:1px solid var(--line);color:var(--ink);border-radius:6px}
+.row{display:flex;gap:8px}.row>div{flex:1}
+button{cursor:pointer;border:none;border-radius:6px;padding:8px 12px;font-weight:600;color:#06222a;background:var(--teal)}
+button.alt{background:#1d3640;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:not-allowed}
+#status{font-size:12px;color:var(--gold);margin:8px 0;min-height:16px}
+.bar{height:8px;background:#0c181b;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;width:0;background:var(--teal);transition:width .2s}
+table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
+th,td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{color:var(--mut);border-bottom:1px solid var(--teal)}
+.note{font-size:11px;color:var(--mut);line-height:1.45;margin-top:8px}
+.tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px}
+.t-dense{background:#23414a;color:#7fe3d6}.t-inter{background:#3a3320;color:#e3c977}.t-rural{background:#2a2530;color:#caa8e0}
+a{color:var(--teal)}
+.exprow{display:flex;gap:8px;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Validation de la distance réseau — Haversine vs réseau piéton (OSRM)</h1>
+  <div class="sub">Échantillon stratifié (dense / intermédiaire / rural) · origines = bâtiments résidentiels OSM · destinations = services (12 catégories) · routage piéton OSRM (FOSSGIS)</div>
+</header>
+<div class="wrap">
+  <div id="side">
+    <div class="fld">
+      <label>1 · Charger le GeoJSON des municipalités (avec <code>type_milieu</code>)</label>
+      <input type="file" id="file" accept=".geojson,.json">
+    </div>
+    <div class="row">
+      <div class="fld"><label>Dense (n)</label><input type="number" id="nDense" value="3" min="0" max="20"></div>
+      <div class="fld"><label>Interméd. (n)</label><input type="number" id="nInter" value="4" min="0" max="20"></div>
+      <div class="fld"><label>Rural (n)</label><input type="number" id="nRural" value="3" min="0" max="20"></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label>Graine (reproductible)</label><input type="number" id="seed" value="42"></div>
+      <div class="fld"><label>Origines / munic.</label><input type="number" id="nOrig" value="12" min="3" max="40"></div>
+    </div>
+    <div class="row">
+      <div class="fld"><label>Max destinations / cat.</label><input type="number" id="nDest" value="16" min="3" max="40"></div>
+      <div class="fld"><label>Profil OSRM</label>
+        <select id="profile"><option value="foot" selected>piéton (foot)</option><option value="bike">vélo</option><option value="car">auto</option></select>
+      </div>
+    </div>
+    <div class="row" style="align-items:flex-end">
+      <div class="fld" style="flex:2"><button id="run" disabled>▶ Lancer la validation</button></div>
+      <div class="fld" style="flex:1"><button class="alt" id="resample" disabled>Re-tirer</button></div>
+    </div>
+    <div id="status"></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div id="sample"></div>
+    <div id="results"></div>
+    <div class="exprow" id="exprow" style="display:none">
+      <button class="alt" id="csv">⬇ CSV (paires)</button>
+      <button class="alt" id="json">⬇ JSON (synthèse)</button>
+    </div>
+    <div class="note">
+      Méthode : pour chaque origine et chaque catégorie, on identifie l'équipement le plus proche à vol d'oiseau (comme l'outil), puis on calcule la distance <b>réseau</b> vers ce même équipement (matrice OSRM). On rapporte le ratio réseau/Haversine, l'erreur, les bascules de classification (selon le rayon adaptatif) et la corrélation de Spearman.<br>
+      Routage : <code>routing.openstreetmap.de</code> (FOSSGIS, usage raisonnable). Données : © OpenStreetMap. Si le navigateur bloque les requêtes en <code>file://</code> (CORS), servez le fichier via un petit serveur local.
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+<script>
+/* ===== Paramètres (identiques à l'outil MilieuxVie) ===== */
+var PARAMS=[
+ {id:"alimentation",label:"Alimentation",dist_dense:800,dist_inter:1500,dist_rural:3000,color:"#2e7d32",match:function(t){return t.shop&&/supermarket|convenience|grocery|butcher|bakery|greengrocer|deli|food|general/.test(t.shop);}},
+ {id:"service_garde",label:"Service de garde",dist_dense:400,dist_inter:800,dist_rural:1500,color:"#1565c0",match:function(t){return t.amenity&&/kindergarten|childcare/.test(t.amenity);}},
+ {id:"ecole_prim",label:"École primaire",dist_dense:800,dist_inter:1500,dist_rural:3000,color:"#1976d2",match:function(t){return t.amenity==="school"&&!/secondaire|polyvalente/.test((t.name||"").toLowerCase());}},
+ {id:"ecole_sec",label:"École secondaire",dist_dense:1600,dist_inter:3000,dist_rural:5000,color:"#0d47a1",match:function(t){if(/college|university/.test(t.amenity||""))return true;return t.amenity==="school"&&/secondaire|polyvalente|cégep/.test((t.name||"").toLowerCase());}},
+ {id:"nature",label:"Espaces naturels",dist_dense:400,dist_inter:800,dist_rural:1500,color:"#4caf50",match:function(t){return /park|garden|nature_reserve/.test(t.leisure||"")||/forest|grass|meadow/.test(t.landuse||"");}},
+ {id:"loisirs",label:"Loisirs et sport",dist_dense:800,dist_inter:1500,dist_rural:3000,color:"#e65100",match:function(t){return /sports_centre|fitness_centre|swimming_pool|stadium|pitch|recreation_ground|ice_rink/.test(t.leisure||"");}},
+ {id:"culture",label:"Équipements culturels",dist_dense:800,dist_inter:1500,dist_rural:3000,color:"#ef6c00",match:function(t){return /theatre|cinema|library|community_centre|arts_centre|social_centre/.test(t.amenity||"");}},
+ {id:"pharmacie",label:"Pharmacie",dist_dense:400,dist_inter:800,dist_rural:2000,color:"#c62828",match:function(t){return t.amenity==="pharmacy";}},
+ {id:"sante",label:"Soins de santé 1re ligne",dist_dense:800,dist_inter:1500,dist_rural:5000,color:"#ad1457",match:function(t){return /clinic|hospital|doctors|health_centre|dentist/.test(t.amenity||"");}},
+ {id:"transport",label:"Transport en commun",dist_dense:800,dist_inter:1500,dist_rural:3000,color:"#6a1b9a",match:function(t){return t.highway==="bus_stop"||/bus_station|ferry_terminal/.test(t.amenity||"")||/station|halt|tram_stop/.test(t.railway||"");}},
+ {id:"autopartage",label:"Mobilité partagée",dist_dense:800,dist_inter:1500,dist_rural:3000,color:"#37474f",match:function(t){return /car_sharing|bicycle_rental/.test(t.amenity||"");}},
+ {id:"cyclable",label:"Réseau cyclable",dist_dense:400,dist_inter:800,dist_rural:1500,color:"#00838f",match:function(t){if(t.highway==="cycleway")return true;if(t.bicycle==="designated"||t.bicycle==="yes")return true;if(t.cycleway&&t.cycleway!=="no")return true;return false;}}
+];
+function getDist(p,mt){return mt==="dense"?p.dist_dense:mt==="inter"?p.dist_inter:p.dist_rural;}
+var PMAP={};PARAMS.forEach(function(p){PMAP[p.id]=p;});
+
+/* ===== Carte ===== */
+var map=L.map("map",{center:[46.6,-74.6],zoom:8});
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{attribution:"&copy; OpenStreetMap &copy; CARTO",subdomains:"abcd",maxZoom:19}).addTo(map);
+var sampleLayer=L.layerGroup().addTo(map), ptLayer=L.layerGroup().addTo(map);
+
+/* ===== Utilitaires ===== */
+function haver(la1,lo1,la2,lo2){var R=6371000,r=Math.PI/180,dLa=(la2-la1)*r,dLo=(lo2-lo1)*r;var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)*Math.sin(dLo/2);return 2*R*Math.asin(Math.sqrt(a));}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,rand){arr=arr.slice();for(var i=arr.length-1;i>0;i--){var j=Math.floor(rand()*(i+1));var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;}return arr;}
+function median(a){if(!a.length)return null;a=a.slice().sort(function(x,y){return x-y;});var n=a.length;return n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2;}
+function quant(a,p){if(!a.length)return null;a=a.slice().sort(function(x,y){return x-y;});return a[Math.min(a.length-1,Math.round(p*(a.length-1)))];}
+function mean(a){return a.length?a.reduce(function(s,x){return s+x;},0)/a.length:null;}
+function spearman(x,y){var n=x.length;if(n<3)return null;function ranks(v){var idx=v.map(function(_,i){return i;}).sort(function(a,b){return v[a]-v[b];});var r=new Array(n);for(var k=0;k<n;k++)r[idx[k]]=k;return r;}var rx=ranks(x),ry=ranks(y),d2=0;for(var i=0;i<n;i++){var d=rx[i]-ry[i];d2+=d*d;}return 1-6*d2/(n*(n*n-1));}
+
+function ringsOf(geom){ // return [{outer:[[lon,lat]...],holes:[...]}...]
+  var polys=[];
+  if(geom.type==="Polygon")polys.push(geom.coordinates);
+  else if(geom.type==="MultiPolygon")geom.coordinates.forEach(function(p){polys.push(p);});
+  return polys.map(function(p){return{outer:p[0],holes:p.slice(1)};});
+}
+function inRing(lon,lat,ring){var inside=false;for(var i=0,j=ring.length-1;i<ring.length;j=i++){var xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];var hit=((yi>lat)!==(yj>lat))&&(lon<(xj-xi)*(lat-yi)/(yj-yi)+xi);if(hit)inside=!inside;}return inside;}
+function inPoly(lon,lat,polys){for(var k=0;k<polys.length;k++){if(inRing(lon,lat,polys[k].outer)){var hole=false;for(var h=0;h<polys[k].holes.length;h++){if(inRing(lon,lat,polys[k].holes[h])){hole=true;break;}}if(!hole)return true;}}return false;}
+function bboxOf(polys){var s=90,w=180,n=-90,e=-180;polys.forEach(function(p){p.outer.forEach(function(c){if(c[1]<s)s=c[1];if(c[1]>n)n=c[1];if(c[0]<w)w=c[0];if(c[0]>e)e=c[0];});});return{s:s,w:w,n:n,e:e};}
+function centroidOf(bb){return{lat:(bb.s+bb.n)/2,lon:(bb.w+bb.e)/2};}
+function milieuOf(pr){var s=((pr.type_milieu!=null?pr.type_milieu:"")+"").toLowerCase();if(/dense/.test(s))return"dense";if(/interm|inter/.test(s))return"inter";if(/rural/.test(s))return"rural";var a=pr.superficie_km2,nlg=pr.nb_logements;if(a&&nlg){var d=nlg/a;return d<10?"rural":d<100?"inter":"dense";}return null;}
+
+/* ===== Overpass ===== */
+function ovPost(q){var eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"];function next(i){if(i>=eps.length)return Promise.reject(new Error("Overpass injoignable"));return fetch(eps[i],{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).catch(function(){return next(i+1);});}return next(0);}
+function servicesQuery(bb){var b=bb.s+","+bb.w+","+bb.n+","+bb.e;
+ return "[out:json][timeout:120];("+
+ 'node["shop"~"supermarket|convenience|grocery|butcher|bakery|greengrocer|deli|food|general"]('+b+');way["shop"~"supermarket|convenience|grocery"]('+b+');'+
+ 'node["amenity"~"kindergarten|childcare"]('+b+');'+
+ 'node["amenity"="school"]('+b+');way["amenity"="school"]('+b+');node["amenity"~"college|university"]('+b+');'+
+ 'node["leisure"~"park|garden|nature_reserve"]('+b+');way["leisure"~"park|garden|nature_reserve"]('+b+');way["landuse"~"forest|grass|meadow"]('+b+');'+
+ 'node["leisure"~"sports_centre|fitness_centre|swimming_pool|stadium|pitch|recreation_ground|ice_rink"]('+b+');way["leisure"~"sports_centre|fitness_centre|swimming_pool|stadium|pitch|recreation_ground|ice_rink"]('+b+');'+
+ 'node["amenity"~"theatre|cinema|library|community_centre|arts_centre|social_centre"]('+b+');way["amenity"~"theatre|cinema|library|community_centre|arts_centre|social_centre"]('+b+');'+
+ 'node["amenity"="pharmacy"]('+b+');node["amenity"~"clinic|hospital|doctors|health_centre|dentist"]('+b+');way["amenity"~"clinic|hospital|doctors|health_centre|dentist"]('+b+');'+
+ 'node["highway"="bus_stop"]('+b+');node["amenity"~"bus_station|ferry_terminal"]('+b+');node["railway"~"station|halt|tram_stop"]('+b+');'+
+ 'node["amenity"~"car_sharing|bicycle_rental"]('+b+');'+
+ 'way["highway"="cycleway"]('+b+');way["bicycle"~"designated|yes"]('+b+');'+
+ ");out center;";
+}
+function buildingsQuery(bb){var b=bb.s+","+bb.w+","+bb.n+","+bb.e;return '[out:json][timeout:120];(way["building"]('+b+');node["building"]('+b+'););out center 1200;';}
+function classify(elements){var cats={};PARAMS.forEach(function(p){cats[p.id]=[];});elements.forEach(function(el){var t=el.tags||{};var la,lo;if(el.type==="node"){la=el.lat;lo=el.lon;}else if(el.center){la=el.center.lat;lo=el.center.lon;}else return;if(la==null||lo==null)return;PARAMS.forEach(function(p){if(p.match(t))cats[p.id].push({lat:la,lon:lo});});});return cats;}
+function buildingPts(elements){var out=[];elements.forEach(function(el){var t=el.tags||{};var bv=(t.building||"").toLowerCase();if(/commercial|industrial|retail|warehouse|school|hospital|church|civic|public|garage|shed|barn|farm_auxiliary|service|hangar|train_station|university|college/.test(bv))return;var la,lo;if(el.type==="node"){la=el.lat;lo=el.lon;}else if(el.center){la=el.center.lat;lo=el.center.lon;}else return;if(la!=null&&lo!=null)out.push({lat:la,lon:lo});});return out;}
+function randomPtsInPoly(polys,bb,k,rand){var out=[],guard=0;while(out.length<k&&guard<k*400){guard++;var la=bb.s+rand()*(bb.n-bb.s),lo=bb.w+rand()*(bb.e-bb.w);if(inPoly(lo,la,polys))out.push({lat:la,lon:lo});}return out;}
+
+/* ===== OSRM matrice ===== */
+function osrmTable(origins,dests,profile){
+  var coords=origins.concat(dests).map(function(p){return p.lon+","+p.lat;}).join(";");
+  var O=origins.length,M=dests.length;
+  var src=[],dst=[];for(var i=0;i<O;i++)src.push(i);for(var j=0;j<M;j++)dst.push(O+j);
+  var url="https://routing.openstreetmap.de/routed-"+profile+"/table/v1/"+profile+"/"+coords+"?sources="+src.join(";")+"&destinations="+dst.join(";")+"&annotations=distance";
+  return fetch(url).then(function(r){if(!r.ok)throw new Error("OSRM "+r.status);return r.json();}).then(function(j){return j.distances;});
+}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+/* ===== État ===== */
+var MUNIS=[], SAMPLE=[], PAIRS=[], SUMMARY=null;
+var $=function(id){return document.getElementById(id);};
+function setStatus(t){$("status").textContent=t;}
+function setProg(p){$("prog").style.width=Math.round(p*100)+"%";}
+
+$("file").addEventListener("change",function(e){
+  var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+  rd.onload=function(){try{
+    var gj=JSON.parse(rd.result);var feats=gj.features||[];MUNIS=[];
+    feats.forEach(function(ft){if(!ft.geometry)return;var polys=ringsOf(ft.geometry);if(!polys.length)return;var bb=bboxOf(polys);var mt=milieuOf(ft.properties||{});if(!mt)return;
+      MUNIS.push({name:(ft.properties.MUS_NM_MUN||ft.properties.name||"?"),id:(ft.properties.MUS_CO_GEO||""),mt:mt,polys:polys,bb:bb,c:centroidOf(bb)});});
+    setStatus(MUNIS.length+" municipalités chargées ("+MUNIS.filter(function(m){return m.mt==="dense";}).length+" denses, "+MUNIS.filter(function(m){return m.mt==="inter";}).length+" interm., "+MUNIS.filter(function(m){return m.mt==="rural";}).length+" rurales). Tirez l'échantillon.");
+    $("run").disabled=false;$("resample").disabled=false;doSample();
+  }catch(err){setStatus("Erreur de lecture du GeoJSON : "+err.message);}};
+  rd.readAsText(f);
+});
+
+function doSample(){
+  var rand=mulberry32(parseInt($("seed").value)||42);
+  var want={dense:parseInt($("nDense").value)||0,inter:parseInt($("nInter").value)||0,rural:parseInt($("nRural").value)||0};
+  SAMPLE=[];["dense","inter","rural"].forEach(function(mt){var pool=shuffle(MUNIS.filter(function(m){return m.mt===mt;}),rand);SAMPLE=SAMPLE.concat(pool.slice(0,want[mt]));});
+  sampleLayer.clearLayers();ptLayer.clearLayers();
+  var css={dense:"#2bb3a3",inter:"#d8a838",rural:"#b07fd0"};
+  SAMPLE.forEach(function(m){m.polys.forEach(function(pp){var latlngs=pp.outer.map(function(c){return[c[1],c[0]];});L.polygon(latlngs,{color:css[m.mt],weight:2,fillOpacity:0.12}).addTo(sampleLayer).bindTooltip(m.name+" ("+m.mt+")");});});
+  if(SAMPLE.length){var grp=L.featureGroup(sampleLayer.getLayers());try{map.fitBounds(grp.getBounds().pad(0.1));}catch(e){}}
+  var html="<table><thead><tr><th>Échantillon ("+SAMPLE.length+")</th><th>Milieu</th></tr></thead><tbody>";
+  SAMPLE.forEach(function(m){var c=m.mt==="dense"?"t-dense":m.mt==="inter"?"t-inter":"t-rural";html+="<tr><td>"+m.name+"</td><td><span class='tag "+c+"'>"+m.mt+"</span></td></tr>";});
+  html+="</tbody></table>";$("sample").innerHTML=html;$("results").innerHTML="";$("exprow").style.display="none";
+}
+$("resample").addEventListener("click",doSample);
+["seed","nDense","nInter","nRural"].forEach(function(id){$(id).addEventListener("change",function(){if(MUNIS.length)doSample();});});
+
+$("run").addEventListener("click",async function(){
+  if(!SAMPLE.length){setStatus("Aucun échantillon.");return;}
+  $("run").disabled=true;$("resample").disabled=true;PAIRS=[];
+  var profile=$("profile").value, O=parseInt($("nOrig").value)||12, M=parseInt($("nDest").value)||16;
+  var rand=mulberry32((parseInt($("seed").value)||42)+777);
+  var osrmFails=0, totalSteps=SAMPLE.length, step=0;
+  ptLayer.clearLayers();
+  for(var s=0;s<SAMPLE.length;s++){
+    var m=SAMPLE[s];
+    setStatus("["+(s+1)+"/"+SAMPLE.length+"] "+m.name+" — services Overpass…");
+    var svc;try{svc=await ovPost(servicesQuery(m.bb));}catch(e){setStatus("Overpass échec ("+m.name+"), on saute.");step++;setProg(step/totalSteps);continue;}
+    var cats=classify(svc.elements||[]);
+    setStatus("["+(s+1)+"/"+SAMPLE.length+"] "+m.name+" — bâtiments…");
+    var bld;try{bld=await ovPost(buildingsQuery(m.bb));}catch(e){bld={elements:[]};}
+    var origins=buildingPts(bld.elements||[]).filter(function(p){return inPoly(p.lon,p.lat,m.polys);});
+    origins=shuffle(origins,rand).slice(0,O);
+    if(origins.length<3)origins=randomPtsInPoly(m.polys,m.bb,O,rand);
+    origins.forEach(function(p){L.circleMarker([p.lat,p.lon],{radius:3,color:"#2bb3a3",weight:1,fillOpacity:0.7}).addTo(ptLayer);});
+    // par catégorie
+    for(var pi=0;pi<PARAMS.length;pi++){
+      var p=PARAMS[pi];var fac=cats[p.id];if(!fac||!fac.length)continue;
+      // M plus proches du centroïde
+      fac=fac.map(function(f){return{f:f,d:haver(m.c.lat,m.c.lon,f.lat,f.lon)};}).sort(function(a,b){return a.d-b.d;}).slice(0,M).map(function(o){return o.f;});
+      var dist;try{dist=await osrmTable(origins,fac,profile);}catch(e){osrmFails++;await sleep(1200);continue;}
+      if(!dist){osrmFails++;continue;}
+      for(var oi=0;oi<origins.length;oi++){
+        var or=origins[oi];
+        var bestJ=-1,bestH=Infinity;
+        for(var fj=0;fj<fac.length;fj++){var h=haver(or.lat,or.lon,fac[fj].lat,fac[fj].lon);if(h<bestH){bestH=h;bestJ=fj;}}
+        if(bestJ<0)continue;
+        var net=dist[oi]?dist[oi][bestJ]:null;
+        if(net==null||!isFinite(net)||bestH<=0)continue;
+        var rad=getDist(p,m.mt);
+        PAIRS.push({muni:m.name,milieu:m.mt,cat:p.id,hav:bestH,net:net,ratio:net/bestH,radius:rad,winH:bestH<=rad?1:0,winN:net<=rad?1:0});
+      }
+      setStatus("["+(s+1)+"/"+SAMPLE.length+"] "+m.name+" — "+p.label+" ("+PAIRS.length+" paires)");
+      await sleep(1200);
+    }
+    step++;setProg(step/totalSteps);
+  }
+  setStatus("Terminé — "+PAIRS.length+" paires · échecs OSRM : "+osrmFails);
+  render(osrmFails,profile,O,M);
+  $("run").disabled=false;$("resample").disabled=false;
+});
+
+function statsFor(rows){
+  if(!rows.length)return null;
+  var ratios=rows.map(function(r){return r.ratio;});
+  var hav=rows.map(function(r){return r.hav;}),net=rows.map(function(r){return r.net;});
+  var absErr=rows.map(function(r){return r.net-r.hav;});
+  var relErr=rows.map(function(r){return (r.net-r.hav)/r.hav;});
+  var flips=rows.filter(function(r){return r.winH!==r.winN;}).length;
+  return{n:rows.length,medRatio:median(ratios),q1:quant(ratios,.25),q3:quant(ratios,.75),
+    meanAbs:mean(absErr),meanRel:mean(relErr),flips:flips,flipPct:flips/rows.length,rho:spearman(hav,net)};
+}
+function fmt(x,d){return x==null?"—":(+x).toFixed(d==null?2:d);}
+function render(fails,profile,O,M){
+  var byM={dense:[],inter:[],rural:[]};PAIRS.forEach(function(r){byM[r.milieu].push(r);});
+  var overall=statsFor(PAIRS);
+  function row(lbl,st){if(!st)return"<tr><td>"+lbl+"</td><td colspan='7'>—</td></tr>";return "<tr><td>"+lbl+"</td><td>"+st.n+"</td><td>"+fmt(st.medRatio)+"</td><td>"+fmt(st.q1)+"–"+fmt(st.q3)+"</td><td>"+fmt(st.meanAbs,0)+"</td><td>"+fmt(st.meanRel*100,1)+"%</td><td>"+st.flips+" ("+fmt(st.flipPct*100,1)+"%)</td><td>"+fmt(st.rho,3)+"</td></tr>";}
+  var h="<table><thead><tr><th>Milieu</th><th>n paires</th><th>Ratio méd.</th><th>IQR ratio</th><th>Δm moy.</th><th>Δ% moy.</th><th>Bascules</th><th>ρ Spearman</th></tr></thead><tbody>";
+  h+=row("Dense",statsFor(byM.dense));h+=row("Intermédiaire",statsFor(byM.inter));h+=row("Rural",statsFor(byM.rural));
+  h+="<tr style='border-top:2px solid #2bb3a3'><td><b>Ensemble</b></td><td><b>"+(overall?overall.n:0)+"</b></td><td><b>"+fmt(overall&&overall.medRatio)+"</b></td><td>"+(overall?fmt(overall.q1)+"–"+fmt(overall.q3):"—")+"</td><td>"+fmt(overall&&overall.meanAbs,0)+"</td><td>"+fmt(overall&&overall.meanRel*100,1)+"%</td><td>"+(overall?overall.flips+" ("+fmt(overall.flipPct*100,1)+"%)":"—")+"</td><td>"+fmt(overall&&overall.rho,3)+"</td></tr>";
+  h+="</tbody></table>";
+  h+="<div class='note'>Ratio = distance réseau / Haversine (vers le même équipement, le plus proche à vol d'oiseau). Δm = erreur absolue moyenne (réseau − Haversine). Bascules = paires dont la classification « dans le rayon » change entre les deux mesures. ρ = corrélation de rang entre distances Haversine et réseau.</div>";
+  $("results").innerHTML=h;$("exprow").style.display="flex";
+  SUMMARY={generated:new Date().toISOString(),profile:profile,osrm:"routing.openstreetmap.de",origins_per_muni:O,max_dest_per_cat:M,
+    seed:parseInt($("seed").value)||42,osrm_failures:fails,
+    sample:SAMPLE.map(function(m){return{name:m.name,milieu:m.mt};}),
+    by_milieu:{dense:statsFor(byM.dense),inter:statsFor(byM.inter),rural:statsFor(byM.rural)},overall:overall,
+    environment:{userAgent:navigator.userAgent,cores:navigator.hardwareConcurrency||null}};
+}
+$("csv").addEventListener("click",function(){
+  var L2=["muni,milieu,categorie,haversine_m,reseau_m,ratio,rayon_m,dans_rayon_haversine,dans_rayon_reseau,bascule"];
+  PAIRS.forEach(function(r){L2.push([r.muni.replace(/,/g," "),r.milieu,r.cat,Math.round(r.hav),Math.round(r.net),r.ratio.toFixed(3),r.radius,r.winH,r.winN,(r.winH!==r.winN?1:0)].join(","));});
+  dl(L2.join("\n"),"validation_reseau_paires.csv","text/csv");
+});
+$("json").addEventListener("click",function(){dl(JSON.stringify(SUMMARY,null,2),"validation_reseau_synthese.json","application/json");});
+function dl(txt,name,type){var b=new Blob([txt],{type:type});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();}
+</script>
+</body>
+</html>
